@@ -31,9 +31,9 @@ jobs:
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax or formatting errors
-        $HOME/.poetry/bin/poetry run flake8 pddlenv --count --show-source --statistics
+        $HOME/.poetry/bin/poetry run python -m flake8 pddlenv --count --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        $HOME/.poetry/bin/poetry flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        $HOME/.poetry/bin/poetry python -m flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        $HOME/.poetry/bin/poetry pytest tests
+        $HOME/.poetry/bin/poetry python -m pytest tests
