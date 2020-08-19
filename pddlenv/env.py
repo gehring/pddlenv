@@ -20,6 +20,9 @@ class EnvState:
     literals: AbstractSet[Literal]
     problem: Problem
 
+    def goal_state(self) -> bool:
+        return self.problem.goal_satisfied(self.literals)
+
 
 @dataclasses.dataclass(frozen=True)
 class PDDLDynamics(object):
