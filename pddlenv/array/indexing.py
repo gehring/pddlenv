@@ -1,5 +1,6 @@
 import collections
 import itertools
+import operator
 from typing import Collection, Dict, Sequence, Tuple
 
 import numpy as np
@@ -19,9 +20,8 @@ def compute_indices(literals: Sequence[Collection[Literal]],
                     objects: Collection[PDDLObject],
                     predicates: Collection[Predicate]
                     ) -> Tuple[Dict[str, IntTupTup], Dict[str, IntTup]]:
-    arity_key = lambda p: p.arity
-    grouped_pred = itertools.groupby(sorted(predicates, key=arity_key),
-                                     key=arity_key)
+    grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
+                                     key=operator.attrgetter("arity"))
     sorted_pred = {
         arity: {p: i for i, p in enumerate(sorted(p))}
         for arity, p in grouped_pred
@@ -44,15 +44,15 @@ def compute_indices(literals: Sequence[Collection[Literal]],
     return tupled_indices, shapes
 
 
-def _ravel_literal_index(arity_offsets: np.ndarray,
-                         indices: IntTupTup,
-                         shapes: IntTupTup) -> Tuple[np.ndarray, ...]:
-    return tuple(
-        np.ravel_multi_index(index[1:], shapes[index[0]]) + arity_offsets[index[0]]
-        for index in indices
-    )
+def ravel_literal_indices(indices: Dict[str, IntTupTup],
+                          shapes: Dict[str, IntTup]) -> Tuple[np.ndarray, np.ndarray]:
 
-
-def ravel_literal_indices(indices: Sequence[IntTupTup], shapes: IntTupTup) -> np.ndarray:
-    arity_offsets = np.cumsum([0] + [np.prod(shape) for shape in shapes[:-1]])
-    return np.stack(tuple(_ravel_literal_index(arity_offsets, idx, shapes) for idx in indices))
+    arity_offsets = dict(zip(
+        shapes.keys(),
+        np.cumsum([0] + [np.prod(shape) for shape in list(shapes.values())[:-1]])
+    ))
+    batch_idx, flat_idx = zip(*(
+        (idx[0], np.ravel_multi_index(idx[1:], shapes[arity]) + arity_offsets[arity])
+        for arity, idx in indices.items()
+    ))
+    return np.concatenate(batch_idx), np.concatenate(flat_idx)
