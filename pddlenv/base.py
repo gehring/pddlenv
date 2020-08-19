@@ -81,6 +81,10 @@ class PDDLVariable:
 class Predicate:
     name: str
     types: Tuple[FrozenSet[PDDLType], ...] = dataclasses.field(repr=False)
+    arity: int = dataclasses.field(init=False, compare=False)
+
+    def __post_init__(self):
+        super().__setattr__("arity", len(self.types))
 
     def __call__(self, objects: Tuple[PDDLObject, ...]) -> "Literal":
         return Literal(self, objects)

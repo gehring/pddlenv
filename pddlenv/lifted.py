@@ -59,18 +59,9 @@ class LiftedLiteral(Lifted[Literal]):
     def assign(self,
                values: Dict[PDDLVariable, PDDLObject],
                problem: Optional["Problem"] = None) -> Literal:
-        objects = []
-        for var in self.objects:
-            obj = values[var]
-            # check that assignment is valid
-            if not var.isvalid(obj):
-                raise ValueError(
-                    f"Invalid assignment. Attempted to assign object {obj} to variable {var}")
-            objects.append(obj)
-        literal = self.predicate(tuple(objects))
-
-        # Return grounded literal if valid, i.e., check that if it is static that it is part of the
-        # known literals.
+        literal = self.predicate(tuple(values[var] for var in self.objects))
+        # Return grounded literal if valid, i.e., check that if it is static and if it is part of
+        # the known static literals.
         if (problem is not None
                 and self.predicate in problem.domain.static_predicates
                 and literal not in problem.static_literals):
@@ -89,7 +80,7 @@ class LiftedLiteral(Lifted[Literal]):
                 for var, objects in zip(self.variables, values_sets)
             }
         else:
-            possible_values = {var: problem.objects[var.types] for var in self.variables}
+            possible_values = {var: problem.objectmap[var.types] for var in self.variables}
 
         return possible_values
 
@@ -135,14 +126,10 @@ class LiftedAction(Lifted[Action]):
         # literals in order to first catch any invalid assignment that would affect both static
         # predicates and non-static predicates.
         if problem is not None:
-            preconditions = {
-                lit
-                for lit in preconditions
-                if lit.predicate not in problem.domain.static_predicates
-            }
+            preconditions -= problem.static_literals
 
-        add_effects = {lit.assign(values, problem) for lit in self.add_effects}
-        del_effects = {lit.assign(values, problem) for lit in self.del_effects}
+        add_effects = {lit.assign(values) for lit in self.add_effects}
+        del_effects = {lit.assign(values) for lit in self.del_effects}
 
         # STRIPS convention
         del_effects -= add_effects
@@ -157,7 +144,7 @@ class LiftedAction(Lifted[Action]):
         )
 
     def valid_values(self, problem: "Problem") -> Dict[PDDLVariable, Tuple[PDDLObject, ...]]:
-        possible_values = {v: problem.objects[v.types] for v in self.variables}
+        possible_values = {v: problem.objectmap[v.types] for v in self.variables}
 
         # Given domain and literals, we filter out impossible assignments due to static predicates
         # by gathering all the valid values for the variables in the precondition
@@ -241,16 +228,42 @@ def parse_pyperplan_literals(literals: Iterable[pddl.Predicate],
 class Problem:
     name: str
     domain: Domain
-    objects: TypeObjectMap
+    objectmap: TypeObjectMap
     goal: FrozenSet[Literal]
     static_literals: FrozenSet[Literal]
 
+    @property
+    def objects(self):
+        return self.objectmap.objects
+
+    @property
+    def predicates(self):
+        return self.domain.predicates
+
+    @functools.cached_property
+    def grounded_actions(self) -> Tuple[Action, ...]:
+        return tuple(itertools.chain(*(a.ground(self) for a in sorted(self.domain.actions))))
+
+    def goal_satisfied(self, literals: AbstractSet[Literal]) -> bool:
+        return self.goal <= literals
+
+    def valid_actions(self, literals: AbstractSet[Literal]) -> Tuple[Action, ...]:
+        return tuple(a for a in self.grounded_actions if a.applicable(literals))
+
     @classmethod
-    def from_pyperplan(cls, problem: pddl.Problem):
+    def from_pddl_filepath(cls, domain_filepath: str, problem_filepath: str) -> "Problem":
+        parser = pyperplan.Parser(domain_filepath, problem_filepath)
+        d = parser.parse_domain()
+        p = parser.parse_problem(d)
+        return cls.from_pyperplan(p)
+
+    @classmethod
+    def from_pyperplan(cls, problem: pddl.Problem) -> "Problem":
         name = problem.name
         domain = Domain.from_pyperplan(problem.domain)
-        objects = TypeObjectMap.from_dict(problem.objects)
+        objectmap = TypeObjectMap.from_dict(problem.objects)
+        objectmap = TypeObjectMap(objectmap.objects | domain.constants)
         goal = parse_pyperplan_literals(problem.goal, domain)
         static_literals = domain.static_literals(
             parse_pyperplan_literals(problem.initial_state, domain))
-        return cls(name, domain, objects, goal, static_literals)
+        return cls(name, domain, objectmap, goal, static_literals)
