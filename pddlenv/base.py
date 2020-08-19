@@ -49,6 +49,7 @@ class PDDLType:
 
 @dataclasses.dataclass(frozen=True, order=True)
 class PDDLObject:
+    __slots__ = ("name", "type")
     name: str
     type: PDDLType
 
@@ -64,6 +65,7 @@ class PDDLObject:
 
 @dataclasses.dataclass(frozen=True, order=True)
 class PDDLVariable:
+    __slots__ = ("name", "types")
     name: str
     types: FrozenSet[PDDLType]
 
@@ -96,7 +98,7 @@ class Predicate:
         return cls(name, types)
 
 
-@dataclasses.dataclass(frozen=True, eq=False)  # we want the default string equality and hash
+@dataclasses.dataclass(eq=False)  # we want the default string equality and hash
 class Literal(str):
     __slots__ = ("predicate", "objects")
     predicate: Predicate
