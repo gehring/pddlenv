@@ -281,9 +281,9 @@ version = "0.35.1"
 test = ["pytest (>=3.0.0)", "pytest-cov"]
 
 [metadata]
-content-hash = "38329c7c351d01f854fb838691b2b929cfe3f2107cccbba22b1115747cb8b6e6"
+content-hash = "d65f619e3611a71e969882103845d621eb4fbcade1f239204348a1366c8e417e"
 lock-version = "1.0"
-python-versions = "~3.8"
+python-versions = "^3.8"
 
 [metadata.files]
 absl-py = [
