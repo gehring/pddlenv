@@ -98,6 +98,7 @@ class Predicate:
 
 @dataclasses.dataclass(frozen=True, eq=False)  # we want the default string equality and hash
 class Literal(str):
+    __slots__ = ("predicate", "objects")
     predicate: Predicate
     objects: Tuple[PDDLObject, ...]
 
@@ -107,6 +108,7 @@ class Literal(str):
 
 @dataclasses.dataclass(frozen=True)
 class Action:
+    __slots__ = ("name", "preconditions", "add_effects", "del_effects")
     name: str
     preconditions: FrozenSet[Literal]
     add_effects: FrozenSet[Literal]

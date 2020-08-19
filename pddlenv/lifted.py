@@ -49,6 +49,7 @@ class Lifted(Protocol[T]):
 
 @dataclasses.dataclass(frozen=True, order=True)
 class LiftedLiteral(Lifted[Literal]):
+    __slots__ = ("predicate", "objects")
     predicate: Predicate
     objects: Tuple[PDDLVariable, ...]
 

@@ -18,7 +18,7 @@ def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
 
 def compute_indices(literals: Sequence[Collection[Literal]],
                     objects: Collection[PDDLObject],
-                    predicates: Collection[Predicate]
+                    predicates: Collection[Predicate],
                     ) -> Tuple[Dict[str, IntTupTup], Dict[str, IntTup]]:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
