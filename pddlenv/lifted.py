@@ -2,7 +2,8 @@ import abc
 import dataclasses
 import functools
 import itertools
-from typing import AbstractSet, Dict, FrozenSet, Iterable, Optional, Protocol, Set, Tuple, TypeVar
+from typing import (AbstractSet, Collection, Dict, FrozenSet, Iterable, Optional, Protocol, Set,
+                    Tuple, TypeVar)
 
 import pyperplan
 from pddl import pddl
@@ -215,14 +216,24 @@ class Domain:
 def parse_pyperplan_literal(literal: pddl.Predicate,
                             namedpreds: Dict[str, Predicate]) -> Literal:
     objects = tuple(PDDLObject.from_pyperplan(o) for o in literal.signature)
-    lifted_lit = LiftedLiteral.from_predicate(namedpreds[literal.name])
-    return lifted_lit.assign(dict(zip(lifted_lit.variables, objects)))
+    return namedpreds[literal.name](objects)
 
 
 def parse_pyperplan_literals(literals: Iterable[pddl.Predicate],
-                             domain: Domain) -> FrozenSet[Literal]:
-    namedpreds = {p.name: p for p in domain.predicates}
+                             predicates: Collection[Predicate]) -> FrozenSet[Literal]:
+    namedpreds = {p.name: p for p in predicates}
     return frozenset(parse_pyperplan_literal(lit, namedpreds) for lit in literals)
+
+
+def parse_pyperplan_problem(problem: pddl.Problem) -> Tuple[FrozenSet[Literal], "Problem"]:
+    name = problem.name
+    domain = Domain.from_pyperplan(problem.domain)
+    objectmap = TypeObjectMap.from_dict(problem.objects)
+    objectmap = TypeObjectMap(objectmap.objects | domain.constants)
+    goal = parse_pyperplan_literals(problem.goal, domain.predicates)
+    initial_state = parse_pyperplan_literals(problem.initial_state, domain.predicates)
+    static_literals = domain.static_literals(initial_state)
+    return initial_state, Problem(name, domain, objectmap, goal, static_literals)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -260,11 +271,6 @@ class Problem:
 
     @classmethod
     def from_pyperplan(cls, problem: pddl.Problem) -> "Problem":
-        name = problem.name
-        domain = Domain.from_pyperplan(problem.domain)
-        objectmap = TypeObjectMap.from_dict(problem.objects)
-        objectmap = TypeObjectMap(objectmap.objects | domain.constants)
-        goal = parse_pyperplan_literals(problem.goal, domain)
-        static_literals = domain.static_literals(
-            parse_pyperplan_literals(problem.initial_state, domain))
-        return cls(name, domain, objectmap, goal, static_literals)
+        _, parsed_problem = parse_pyperplan_problem(problem)
+        assert parsed_problem.__class__ == cls
+        return parsed_problem

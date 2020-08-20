@@ -21,7 +21,8 @@ def pddlgym_initializer(rng,
         pyperplan_problem = parser.parse_problem(pyperplan_domain)
 
         problem = Problem.from_pyperplan(pyperplan_problem)
-        initial_literals = parse_pyperplan_literals(pyperplan_problem.initial_state, problem.domain)
+        initial_literals = parse_pyperplan_literals(
+            pyperplan_problem.initial_state, problem.predicates)
         initial_envstates.append(EnvState(initial_literals, problem))
 
     while True:
@@ -40,7 +41,7 @@ def fixed_problem_initializer(rng,
     problem = Problem.from_pyperplan(pyperplan_problem)
     if initial_literals is None:
         initial_literals = [
-            parse_pyperplan_literals(pyperplan_problem.initial_state, problem.domain),
+            parse_pyperplan_literals(pyperplan_problem.initial_state, problem.predicates),
         ]
 
     while True:
