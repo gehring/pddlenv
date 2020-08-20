@@ -19,7 +19,7 @@ def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
 def compute_indices(literals: Sequence[Collection[Literal]],
                     objects: Collection[PDDLObject],
                     predicates: Collection[Predicate],
-                    ) -> Tuple[Dict[str, IntTupTup], Dict[str, IntTup]]:
+                    ) -> Tuple[Dict[int, IntTupTup], Dict[int, IntTup]]:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
     sorted_pred = {
@@ -36,16 +36,16 @@ def compute_indices(literals: Sequence[Collection[Literal]],
             indices[arity].append((i,) + _grounded_literal_index(lit, objects, sorted_pred[arity]))
 
     shapes = {
-        str(arity): (len(objects),) * arity + (len(sorted_pred[arity]),)
+        arity: (len(objects),) * arity + (len(sorted_pred[arity]),)
         for arity in sorted_pred
     }
-    tupled_indices = {str(k): tuple(zip(*idx)) for k, idx in indices.items()}
+    tupled_indices = {k: tuple(zip(*idx)) for k, idx in indices.items()}
 
     return tupled_indices, shapes
 
 
-def ravel_literal_indices(indices: Dict[str, IntTupTup],
-                          shapes: Dict[str, IntTup]) -> Tuple[np.ndarray, np.ndarray]:
+def ravel_literal_indices(indices: Dict[int, IntTupTup],
+                          shapes: Dict[int, IntTup]) -> Tuple[np.ndarray, np.ndarray]:
 
     arity_offsets = dict(zip(
         shapes.keys(),

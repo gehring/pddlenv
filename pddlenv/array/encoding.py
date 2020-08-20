@@ -1,7 +1,6 @@
-from typing import Collection, Sequence
+from typing import Collection, Dict, Sequence
 
 import numpy as np
-import numpy.lib.recfunctions
 
 from pddlenv.array.indexing import compute_indices
 from pddlenv.base import Literal
@@ -10,12 +9,11 @@ from pddlenv.lifted import Problem
 
 def to_dense_binary(literals: Sequence[Collection[Literal]],
                     problem: Problem,
-                    dtype: type = np.float32) -> np.ndarray:
+                    dtype: type = np.float32) -> Dict[int, np.ndarray]:
     indices, shapes = compute_indices(
         literals, problem.objectmap.objects, problem.domain.predicates)
 
-    features_dtype = [(k, dtype, shape) for k, shape in shapes.items()]
-    features = np.zeros(len(literals), dtype=features_dtype)
+    features = {arity: np.zeros(shape, dtype=dtype) for arity, shape in shapes.items()}
     for k, idx in indices.items():
         features[k][idx] = 1
 
@@ -26,4 +24,4 @@ def to_flat_dense_binary(literals: Sequence[Collection[Literal]],
                          problem: Problem,
                          dtype: type = np.float32) -> np.ndarray:
     features = to_dense_binary(literals, problem, dtype=dtype)
-    return np.lib.recfunctions.structured_to_unstructured(features)
+    return np.concatenate(tuple(x.reshape((x.shape[0], -1)) for x in features.values()), axis=-1)
