@@ -63,9 +63,10 @@ class PDDLDynamics(object):
             timestep = dm_env.transition(reward, next_state, self.discount)
         return timestep
 
-    def sample_transitions(self, state: EnvState) -> Tuple[dm_env.TimeStep, ...]:
+    def sample_transitions(self, state: EnvState
+                           ) -> Tuple[Tuple[Action, ...], Tuple[dm_env.TimeStep, ...]]:
         actions = state.problem.valid_actions(state.literals)
-        return tuple(self(state, a) for a in actions)
+        return actions, tuple(self(state, a) for a in actions)
 
 
 @dataclasses.dataclass
