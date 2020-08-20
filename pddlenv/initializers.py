@@ -1,6 +1,6 @@
 import glob
 import os
-from typing import AbstractSet, Sequence
+from typing import AbstractSet, Optional, Sequence
 
 from .base import Literal
 from .env import EnvState, StateInitializer, reachable_states
@@ -9,14 +9,19 @@ from .lifted import Problem, parse_pddl_problem
 
 def pddlgym_initializer(rng,
                         domain_filepath: str,
-                        problem_dirpath: str) -> StateInitializer:
+                        problem_dirpath: str,
+                        problem_index: Optional[int] = None) -> StateInitializer:
     initial_states = []
-    for problem_filepath in glob.iglob(os.path.join(problem_dirpath, "*.pddl")):
+    for problem_filepath in sorted(glob.iglob(os.path.join(problem_dirpath, "*.pddl"))):
         initial_states.append(
             EnvState(*parse_pddl_problem(domain_filepath, problem_filepath)))
 
     while True:
-        yield rng.choice(initial_states)
+        if problem_index is None:
+            init_state = rng.choice(initial_states)
+        else:
+            init_state = initial_states[problem_index]
+        yield init_state
 
 
 def fixed_problem_initializer(rng,
