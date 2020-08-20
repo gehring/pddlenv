@@ -13,7 +13,8 @@ def to_dense_binary(literals: Sequence[Collection[Literal]],
     indices, shapes = compute_indices(
         literals, problem.objectmap.objects, problem.domain.predicates)
 
-    features = {arity: np.zeros(shape, dtype=dtype) for arity, shape in shapes.items()}
+    n = len(literals)
+    features = {arity: np.zeros((n,) + shape, dtype=dtype) for arity, shape in shapes.items()}
     for k, idx in indices.items():
         features[k][idx] = 1
 
