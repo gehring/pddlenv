@@ -1,5 +1,6 @@
+import collections
 import dataclasses
-from typing import AbstractSet, Generator, Optional, Tuple
+from typing import AbstractSet, Collection, Generator, Optional, Set, Tuple
 
 import dm_env
 
@@ -31,7 +32,10 @@ class PDDLDynamics(object):
     use_cost_reward: bool
     heuristic: Optional[Heuristic]
 
-    def __init__(self, discount: float, use_cost_reward: bool, heuristic: Optional[Heuristic]):
+    def __init__(self,
+                 discount: float = 1.,
+                 use_cost_reward: bool = True,
+                 heuristic: Optional[Heuristic] = None):
         super().__setattr__("discount", discount)
         super().__setattr__("use_cost_reward", use_cost_reward)
         super().__setattr__("heuristic", heuristic)
@@ -67,6 +71,25 @@ class PDDLDynamics(object):
                            ) -> Tuple[Tuple[Action, ...], Tuple[dm_env.TimeStep, ...]]:
         actions = state.problem.valid_actions(state.literals)
         return actions, tuple(self(state, a) for a in actions)
+
+
+def reachable_states(init_states: Collection[EnvState],
+                     dynamics: Optional[PDDLDynamics] = None) -> Set[EnvState]:
+    if dynamics is None:
+        dynamics = PDDLDynamics()
+    stack = collections.deque(init_states)
+    seen = set()
+
+    while stack:
+        state = stack.pop()
+        seen.add(state)
+
+        if not state.goal_state():
+            _, timesteps = dynamics.sample_transitions(state)
+            _, _, _, next_states = zip(*timesteps)
+            stack.extend([s for s in next_states if s not in seen])
+
+    return seen
 
 
 @dataclasses.dataclass

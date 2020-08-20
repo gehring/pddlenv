@@ -236,6 +236,14 @@ def parse_pyperplan_problem(problem: pddl.Problem) -> Tuple[FrozenSet[Literal], 
     return initial_state, Problem(name, domain, objectmap, goal, static_literals)
 
 
+def parse_pddl_problem(domain_filepath: str,
+                       problem_filepath: str) -> Tuple[FrozenSet[Literal], "Problem"]:
+    parser = pyperplan.Parser(domain_filepath, problem_filepath)
+    d = parser.parse_domain()
+    p = parser.parse_problem(d)
+    return parse_pyperplan_problem(p)
+
+
 @dataclasses.dataclass(frozen=True)
 class Problem:
     name: str

@@ -1,52 +1,36 @@
 import glob
 import os
-from typing import AbstractSet, Optional, Sequence
-
-import pyperplan
+from typing import AbstractSet, Sequence
 
 from .base import Literal
-from .env import EnvState, StateInitializer
-from .lifted import Problem, parse_pyperplan_literals
+from .env import EnvState, StateInitializer, reachable_states
+from .lifted import Problem, parse_pddl_problem
 
 
 def pddlgym_initializer(rng,
                         domain_filepath: str,
                         problem_dirpath: str) -> StateInitializer:
-    parser = pyperplan.Parser(domain_filepath)
-    pyperplan_domain = parser.parse_domain()
-
-    initial_envstates = []
+    initial_states = []
     for problem_filepath in glob.iglob(os.path.join(problem_dirpath, "*.pddl")):
-        parser.probFile = problem_filepath
-        pyperplan_problem = parser.parse_problem(pyperplan_domain)
-
-        problem = Problem.from_pyperplan(pyperplan_problem)
-        initial_literals = parse_pyperplan_literals(
-            pyperplan_problem.initial_state, problem.predicates)
-        initial_envstates.append(EnvState(initial_literals, problem))
+        initial_states.append(
+            EnvState(*parse_pddl_problem(domain_filepath, problem_filepath)))
 
     while True:
-        yield rng.choice(initial_envstates)
+        yield rng.choice(initial_states)
 
 
 def fixed_problem_initializer(rng,
-                              domain_filepath: str,
-                              problem_filepath: str,
-                              initial_literals: Optional[Sequence[AbstractSet[Literal]]] = None,
+                              problem: Problem,
+                              initial_literals: Sequence[AbstractSet[Literal]],
                               ) -> StateInitializer:
-    parser = pyperplan.Parser(domain_filepath, problem_filepath)
-    pyperplan_domain = parser.parse_domain()
-    pyperplan_problem = parser.parse_problem(pyperplan_domain)
-
-    problem = Problem.from_pyperplan(pyperplan_problem)
-    if initial_literals is None:
-        initial_literals = [
-            parse_pyperplan_literals(pyperplan_problem.initial_state, problem.predicates),
-        ]
-
     while True:
-        if len(initial_literals) > 1:
-            initial_envstate = EnvState(rng.choice(initial_literals), problem)
-        else:
-            initial_envstate = EnvState(initial_literals[0], problem)
-        yield initial_envstate
+        yield EnvState(rng.choice(initial_literals), problem)
+
+
+def reachable_states_initializer(rng,
+                                 domain_filepath: str,
+                                 problem_filepath: str) -> StateInitializer:
+    initial_state = EnvState(*parse_pddl_problem(domain_filepath, problem_filepath))
+    states = reachable_states([initial_state])
+    while True:
+        yield rng.choice(states)
