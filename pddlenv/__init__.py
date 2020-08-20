@@ -1,4 +1,4 @@
-from . import array
+from . import array, initializers
 from .base import Action, Literal, PDDLObject, PDDLType, PDDLVariable, Predicate, TypeObjectMap
 from .env import EnvState, PDDLDynamics, PDDLEnv, StateInitializer
 from .heuristic import Heuristic
