@@ -100,11 +100,11 @@ class PDDLEnv(dm_env.Environment):
     state: Optional[EnvState]
 
     def __init__(self,
-                 dynamics: PDDLDynamics,
                  state_initializer: StateInitializer,
+                 dynamics: Optional[PDDLDynamics] = None,
                  state: Optional[EnvState] = None):
-        self.dynamics = dynamics
         self.state_initializer = state_initializer
+        self.dynamics = dynamics if dynamics is not None else PDDLDynamics()
         self.state = state
 
     def reset(self):
