@@ -36,6 +36,6 @@ def reachable_states_initializer(rng,
                                  domain_filepath: str,
                                  problem_filepath: str) -> StateInitializer:
     initial_state = EnvState(*parse_pddl_problem(domain_filepath, problem_filepath))
-    states = reachable_states([initial_state])
+    states = tuple(reachable_states([initial_state]))
     while True:
         yield rng.choice(states)
