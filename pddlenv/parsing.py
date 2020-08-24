@@ -65,6 +65,12 @@ def parse_pyperplan_domain(domain: pddl.Domain) -> Type["base.Problem"]:
     return base.define_problem(domain.name, types, predicates, actions, constants)
 
 
+def parse_pddl_domain(domain_path: str) -> Type["base.Problem"]:
+    parser = pyperplan.Parser(domain_path)
+    d = parser.parse_domain()
+    return parse_pyperplan_domain(d)
+
+
 def parse_pyperplan_problem(problem: pddl.Problem
                             ) -> Tuple[FrozenSet["base.Predicate"], "base.Problem"]:
     Domain = parse_pyperplan_domain(problem.domain)
