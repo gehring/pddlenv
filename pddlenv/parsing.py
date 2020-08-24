@@ -17,7 +17,9 @@ def parse_pyperplan_predicate(pred: pddl.Predicate) -> Type["base.Predicate"]:
 def parse_pyperplan_lifted_predicate(predicate: pddl.Predicate
                                      ) -> Tuple[Type["base.Predicate"], Tuple[str, ...]]:
     pred = parse_pyperplan_predicate(predicate)
-    var_names, _ = zip(*predicate.signature)
+    var_names = ()
+    if predicate.signature:
+        var_names, _ = zip(*predicate.signature)
     return pred, var_names
 
 
