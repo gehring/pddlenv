@@ -112,6 +112,11 @@ class Action(str):
         self.add_effects = frozenset(add_effects)
         self.del_effects = frozenset(del_effects)
 
+    @property
+    def name(self) -> str:
+        # to maintain compatibility with pyperplan's heuristics
+        return self.__class__.__name__
+
     def applicable(self, literals: AbstractSet[Predicate]) -> bool:
         return self.preconditions <= literals
 

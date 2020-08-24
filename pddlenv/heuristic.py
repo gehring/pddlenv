@@ -21,11 +21,8 @@ class Node:
     state: FrozenSet[Predicate]
 
 
-def make_heuristic_function(name, problem, cache_maxsize=None):
-    actions = tuple(itertools.chain(*(
-        a.ground(problem)
-        for a in problem.domain.actions
-    )))
+def make_heuristic_function(name: str, problem: Problem, cache_maxsize: Optional[int] = None):
+    actions = problem.grounded_actions
     task = Task(
         facts=frozenset(itertools.chain(*(a.literals() for a in actions))),
         goals=problem.goal,
@@ -34,7 +31,7 @@ def make_heuristic_function(name, problem, cache_maxsize=None):
     heuristic = pyperplan.HEURISTICS[name](task)
 
     @functools.lru_cache(maxsize=cache_maxsize)
-    def _heuristic(literals: AbstractSet[Predicate]) -> float:
+    def _heuristic(literals: FrozenSet[Predicate]) -> float:
         node = Node(literals - problem.static_literals)
         return heuristic(node)
 
