@@ -5,21 +5,20 @@ from typing import AbstractSet, FrozenSet, Optional, Tuple
 
 import pyperplan
 
-from .base import Action, Literal
-from .lifted import Problem
+from .base import Action, Predicate, Problem
 
 
 @dataclasses.dataclass(frozen=True)
 class Task:
-    facts: FrozenSet[Literal]
-    goals: FrozenSet[Literal]
+    facts: FrozenSet[Predicate]
+    goals: FrozenSet[Predicate]
     operators: Tuple[Action, ...]
-    initial_state: Optional[FrozenSet] = None
+    initial_state: Optional[FrozenSet[Predicate]] = None
 
 
 @dataclasses.dataclass(frozen=True)
 class Node:
-    state: FrozenSet[Literal]
+    state: FrozenSet[Predicate]
 
 
 def make_heuristic_function(name, problem, cache_maxsize=None):
@@ -35,7 +34,7 @@ def make_heuristic_function(name, problem, cache_maxsize=None):
     heuristic = pyperplan.HEURISTICS[name](task)
 
     @functools.lru_cache(maxsize=cache_maxsize)
-    def _heuristic(literals: AbstractSet[Literal]) -> float:
+    def _heuristic(literals: AbstractSet[Predicate]) -> float:
         node = Node(literals - problem.static_literals)
         return heuristic(node)
 
@@ -46,7 +45,7 @@ def make_heuristic_function(name, problem, cache_maxsize=None):
 class Heuristic:
     name: str
 
-    def __call__(self, literals: AbstractSet[Literal], problem: Problem) -> float:
+    def __call__(self, literals: AbstractSet[Predicate], problem: Problem) -> float:
         return self._heuristic_function(problem)(literals)
 
     @functools.lru_cache

@@ -4,9 +4,8 @@ from typing import AbstractSet, Collection, Generator, Optional, Set, Tuple
 
 import dm_env
 
-from .base import Action, Literal
+from .base import Action, Predicate, Problem
 from .heuristic import Heuristic
-from .lifted import Problem
 
 StateInitializer = Generator["EnvState", Optional[Problem], None]
 
@@ -18,7 +17,7 @@ class InvalidAction(ValueError):
 @dataclasses.dataclass(frozen=True)
 class EnvState:
     __slots__ = ("literals", "problem")
-    literals: AbstractSet[Literal]
+    literals: AbstractSet[Predicate]
     problem: Problem
 
     def goal_state(self) -> bool:

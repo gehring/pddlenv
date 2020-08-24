@@ -1,11 +1,11 @@
 import collections
 import itertools
 import operator
-from typing import Collection, Dict, Sequence, Tuple
+from typing import Collection, Dict, Sequence, Tuple, Type
 
 import numpy as np
 
-from pddlenv.base import Literal, PDDLObject, Predicate
+from pddlenv.base import PDDLObject, Predicate
 
 IntTup = Tuple[int, ...]
 IntTupTup = Tuple[Tuple[int, ...], ...]
@@ -13,17 +13,17 @@ IntTupTup = Tuple[Tuple[int, ...], ...]
 
 def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
     index = tuple(sorted_objects[o] for o in literal.objects)
-    return index + (sorted_predicates[literal.predicate],)
+    return index + (sorted_predicates[type(literal)],)
 
 
-def compute_indices(literals: Sequence[Collection[Literal]],
+def compute_indices(literals: Sequence[Collection[Predicate]],
                     objects: Collection[PDDLObject],
-                    predicates: Collection[Predicate],
+                    predicates: Collection[Type[Predicate]],
                     ) -> Tuple[Dict[int, IntTupTup], Dict[int, IntTup]]:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
     sorted_pred = {
-        arity: {p: i for i, p in enumerate(sorted(p))}
+        arity: {p: i for i, p in enumerate(sorted(p, key=operator.attrgetter("__name__")))}
         for arity, p in grouped_pred
     }
 
@@ -32,7 +32,7 @@ def compute_indices(literals: Sequence[Collection[Literal]],
     indices = collections.defaultdict(list)
     for i, lits in enumerate(literals):
         for lit in lits:
-            arity = lit.predicate.arity
+            arity = lit.arity
             indices[arity].append((i,) + _grounded_literal_index(lit, objects, sorted_pred[arity]))
 
     shapes = {

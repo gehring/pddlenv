@@ -2,9 +2,9 @@ import glob
 import os
 from typing import AbstractSet, Optional, Sequence
 
-from .base import Literal
+from .base import Predicate, Problem
 from .env import EnvState, StateInitializer, reachable_states
-from .lifted import Problem, parse_pddl_problem
+from .parsing import parse_pddl_problem
 
 
 def pddlgym_initializer(rng,
@@ -26,7 +26,7 @@ def pddlgym_initializer(rng,
 
 def fixed_problem_initializer(rng,
                               problem: Problem,
-                              initial_literals: Sequence[AbstractSet[Literal]],
+                              initial_literals: Sequence[AbstractSet[Predicate]],
                               ) -> StateInitializer:
     while True:
         yield EnvState(rng.choice(initial_literals), problem)
