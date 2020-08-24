@@ -179,7 +179,7 @@ class Problem(str):
 
     @functools.cached_property
     def grounded_actions(self) -> Tuple[Action, ...]:
-        return tuple(itertools.chain(*(a.ground(self) for a in sorted(self.actions))))
+        return tuple(itertools.chain(*(a.ground(self) for a in self.actions)))
 
     def goal_satisfied(self, literals: AbstractSet[Predicate]) -> bool:
         return self.goal <= literals
