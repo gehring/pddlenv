@@ -9,7 +9,7 @@ license = "MIT"
 python = "^3.8"
 pyperplan = "^1.3"
 dm-env = "^1.2"
-numpy = "^1.19.1"
+numpy = ">=1.18"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
