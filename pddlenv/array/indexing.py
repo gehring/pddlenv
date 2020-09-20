@@ -16,6 +16,24 @@ def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
     return index + (sorted_predicates[type(literal)],)
 
 
+def _shape_from_grouped_predicates(num_objects: int,
+                                   grouped_pred: Iterable[Tuple[int, Collection[Type[Predicate]]]]):
+    return {
+        arity: (num_objects,) * arity + (len(preds),)
+        for arity, preds in grouped_pred
+    }
+
+
+def compute_shapes(num_objects: int,
+                   predicates: Collection[Type[Predicate]]) -> Dict[int, Tuple[int, ...]]:
+    grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
+                                     key=operator.attrgetter("arity"))
+    return _shape_from_grouped_predicates(
+        num_objects,
+        grouped_pred=((arity, tuple(preds)) for arity, preds in grouped_pred),
+    )
+
+
 def compute_indices(literals: Iterable[Collection[Predicate]],
                     objects: Collection[PDDLObject],
                     predicates: Collection[Type[Predicate]],
@@ -35,10 +53,7 @@ def compute_indices(literals: Iterable[Collection[Predicate]],
             arity = lit.arity
             indices[arity].append((i,) + _grounded_literal_index(lit, objects, sorted_pred[arity]))
 
-    shapes = {
-        arity: (len(objects),) * arity + (len(sorted_pred[arity]),)
-        for arity in sorted_pred
-    }
+    shapes = _shape_from_grouped_predicates(len(objects), sorted_pred.items())
     tupled_indices = {k: tuple(zip(*idx)) for k, idx in indices.items()}
 
     return tupled_indices, shapes
