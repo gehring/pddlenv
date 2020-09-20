@@ -1,7 +1,7 @@
 import collections
 import itertools
 import operator
-from typing import Collection, Dict, Sequence, Tuple, Type
+from typing import Collection, Dict, Iterable, Tuple, Type
 
 import numpy as np
 
@@ -16,7 +16,7 @@ def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
     return index + (sorted_predicates[type(literal)],)
 
 
-def compute_indices(literals: Sequence[Collection[Predicate]],
+def compute_indices(literals: Iterable[Collection[Predicate]],
                     objects: Collection[PDDLObject],
                     predicates: Collection[Type[Predicate]],
                     ) -> Tuple[Dict[int, IntTupTup], Dict[int, IntTup]]:
