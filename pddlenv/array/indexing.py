@@ -1,14 +1,15 @@
 import collections
 import itertools
 import operator
-from typing import Collection, Dict, Iterable, Tuple, Type
+from typing import Collection, Dict, Iterable, Tuple, Type, TypeVar
 
 import numpy as np
 
-from pddlenv.base import PDDLObject, Predicate
+from pddlenv.base import ArityObject, PDDLObject
 
 IntTup = Tuple[int, ...]
 IntTupTup = Tuple[Tuple[int, ...], ...]
+P = TypeVar("P", bound=ArityObject)
 
 
 def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
@@ -17,7 +18,8 @@ def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
 
 
 def _shape_from_grouped_predicates(num_objects: int,
-                                   grouped_pred: Iterable[Tuple[int, Collection[Type[Predicate]]]]):
+                                   grouped_pred: Iterable[Tuple[int, Collection[Type[P]]]]
+                                   ) -> Dict[int, Tuple[int, ...]]:
     return {
         arity: (num_objects,) * arity + (len(preds),)
         for arity, preds in grouped_pred
@@ -25,7 +27,7 @@ def _shape_from_grouped_predicates(num_objects: int,
 
 
 def compute_shapes(num_objects: int,
-                   predicates: Collection[Type[Predicate]]) -> Dict[int, Tuple[int, ...]]:
+                   predicates: Collection[Type[P]]) -> Dict[int, Tuple[int, ...]]:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
     return _shape_from_grouped_predicates(
@@ -34,15 +36,15 @@ def compute_shapes(num_objects: int,
     )
 
 
-def compute_indices(literals: Iterable[Collection[Predicate]],
+def compute_indices(literals: Iterable[Collection[P]],
                     objects: Collection[PDDLObject],
-                    predicates: Collection[Type[Predicate]],
+                    predicates: Collection[Type[P]],
                     ) -> Tuple[Dict[int, IntTupTup], Dict[int, IntTup]]:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
     sorted_pred = {
-        arity: {p: i for i, p in enumerate(sorted(p, key=operator.attrgetter("__name__")))}
-        for arity, p in grouped_pred
+        arity: {p: i for i, p in enumerate(sorted(preds, key=operator.attrgetter("__name__")))}
+        for arity, preds in grouped_pred
     }
 
     objects = {o: i for i, o in enumerate(sorted(objects))}

@@ -5,11 +5,11 @@ import itertools
 import operator
 import types as pytypes
 from typing import (AbstractSet, ClassVar, Collection, Dict, FrozenSet, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, TypeVar, Union)
+                    Protocol, Sequence, Set, Tuple, Type, TypeVar, Union)
 
 from pddl import pddl
 
-from . import parsing
+from pddlenv import parsing
 
 _TypeTuple = Tuple[str, Optional["_TypeTuple"]]  # type: ignore
 _predicate_cache: Dict[str, Type] = {}
@@ -24,6 +24,10 @@ class InvalidAssignment(ValueError):
 
 class PDDLObject(str):
     __slots__ = ()
+
+
+class ArityObject(Protocol):
+    arity: ClassVar[int]
 
 
 class Predicate(str):
@@ -61,6 +65,7 @@ class Action(str):
     del_effects: FrozenSet[Predicate]
 
     types: ClassVar[Tuple[Type[PDDLObject], ...]] = ()
+    arity: ClassVar[int] = 0
     pre_predicates: ClassVar[Tuple[Tuple[Type[Predicate], Tuple[int, ...]], ...]] = ()
     add_predicates: ClassVar[Tuple[Tuple[Type[Predicate], Tuple[int, ...]], ...]] = ()
     del_predicates: ClassVar[Tuple[Tuple[Type[Predicate], Tuple[int, ...]], ...]] = ()
@@ -68,11 +73,12 @@ class Action(str):
     def __init_subclass__(cls, /, variables, preconditions, add_effects, del_effects, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.types = tuple(tuple(var_types) for _, var_types in variables)
+        cls.arity = len(cls.types)
         cls.pre_predicates = tuple(variable_predicate_map(variables, preconditions))
         cls.add_predicates = tuple(variable_predicate_map(variables, add_effects))
         cls.del_predicates = tuple(variable_predicate_map(variables, del_effects))
 
-    def __new__(cls, *objects, problem):
+    def __new__(cls, *objects, problem=None):
         if len(cls.types) != len(objects):
             raise ValueError(
                 f"Action '{cls.__name__}' expects {len(cls.types)} objects but "
