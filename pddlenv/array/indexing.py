@@ -7,8 +7,8 @@ import numpy as np
 
 from pddlenv.base import ArityObject, PDDLObject
 
-IntTup = Tuple[int, ...]
-IntTupTup = Tuple[Tuple[int, ...], ...]
+LiteralIndices = Dict[int, Tuple[np.array, ...]]
+LiteralShapes = Dict[int, Tuple[int, ...]]
 P = TypeVar("P", bound=ArityObject)
 
 
@@ -19,7 +19,7 @@ def _grounded_literal_index(literal, sorted_objects, sorted_predicates):
 
 def _shape_from_grouped_predicates(num_objects: int,
                                    grouped_pred: Iterable[Tuple[int, Collection[Type[P]]]]
-                                   ) -> Dict[int, Tuple[int, ...]]:
+                                   ) -> LiteralShapes:
     return {
         arity: (num_objects,) * arity + (len(preds),)
         for arity, preds in grouped_pred
@@ -27,7 +27,7 @@ def _shape_from_grouped_predicates(num_objects: int,
 
 
 def compute_shapes(num_objects: int,
-                   predicates: Collection[Type[P]]) -> Dict[int, Tuple[int, ...]]:
+                   predicates: Collection[Type[P]]) -> LiteralShapes:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
     return _shape_from_grouped_predicates(
@@ -38,8 +38,7 @@ def compute_shapes(num_objects: int,
 
 def compute_indices(literals: Iterable[Collection[P]],
                     objects: Collection[PDDLObject],
-                    predicates: Collection[Type[P]],
-                    ) -> Tuple[Dict[int, IntTupTup], Dict[int, IntTup]]:
+                    predicates: Collection[Type[P]]) -> Tuple[LiteralIndices, LiteralShapes]:
     grouped_pred = itertools.groupby(sorted(predicates, key=operator.attrgetter("arity")),
                                      key=operator.attrgetter("arity"))
     sorted_pred = {
@@ -56,14 +55,16 @@ def compute_indices(literals: Iterable[Collection[P]],
             indices[arity].append((i,) + _grounded_literal_index(lit, objects, sorted_pred[arity]))
 
     shapes = _shape_from_grouped_predicates(len(objects), sorted_pred.items())
-    tupled_indices = {k: tuple(zip(*idx)) for k, idx in indices.items()}
+    tupled_indices = {
+        k: tuple(np.array(i) for i in zip(*idx))
+        for k, idx in indices.items()
+    }
 
     return tupled_indices, shapes
 
 
-def ravel_literal_indices(indices: Dict[int, IntTupTup],
-                          shapes: Dict[int, IntTup]) -> Tuple[np.ndarray, np.ndarray]:
-
+def ravel_literal_indices(indices: LiteralIndices,
+                          shapes: LiteralShapes) -> Tuple[np.ndarray, np.ndarray]:
     arity_offsets = dict(zip(
         shapes.keys(),
         np.cumsum([0] + [np.prod(shape) for shape in list(shapes.values())[:-1]])
@@ -73,3 +74,29 @@ def ravel_literal_indices(indices: Dict[int, IntTupTup],
         for arity, idx in indices.items()
     ))
     return np.concatenate(batch_idx), np.concatenate(flat_idx)
+
+
+def _unravel_index(indices, arity_offset, shape):
+    batch_idx, idx = zip(*indices)
+    return (np.array(batch_idx),) + np.unravel_index(np.subtract(idx, arity_offset), shape)
+
+
+def unravel_literal_indices(indices: Tuple[np.ndarray, np.ndarray],
+                            shapes: LiteralShapes) -> LiteralIndices:
+    arity_offsets = np.cumsum([np.prod(shape) for shape in shapes.values()])
+    arity_indices = np.digitize(indices[1], arity_offsets)
+    print(shapes)
+    print(arity_indices)
+    print(np.array(shapes.keys()))
+    print(indices)
+    arities = np.take(list(shapes.keys()), arity_indices)
+
+    ravelled = collections.defaultdict(list)
+    for arity, batch_idx, idx in zip(arities, *indices):
+        ravelled[arity].append((batch_idx, idx))
+
+    print(ravelled)
+    return {
+        arity: _unravel_index(idx, offset, shapes[arity])
+        for (arity, idx), offset in zip(ravelled.items(), np.pad(arity_offsets[:-1], (1, 0)))
+    }

@@ -1,5 +1,7 @@
 import operator
 
+import numpy as np
+
 import pddlenv
 
 
@@ -65,3 +67,28 @@ def test_compute_action_index(problem):
     trenary_preds = [p for p in problem.actions if p.arity == 3]
     assert binary_preds[indices[2][-1][0]] == actions["CleanHouse"]
     assert trenary_preds[indices[3][-1][0]] == actions["LetIn"]
+
+
+def test_ravel_unravel_idempotent(problem):
+    types = {t.__name__: t for t in problem.types}
+    preds = {p.__name__: p for p in problem.predicates}
+    literals = [
+        [preds["Clean"](types["House"]("house"))],
+        [preds["Clean"](types["House"]("house")),
+         preds["In"](types["Cat"]("cat"), types["Hat"]("hat"))],
+    ]
+    indices, shapes = pddlenv.array.compute_indices(literals, problem.objects, problem.predicates)
+
+    flat_idx = pddlenv.array.ravel_literal_indices(indices, shapes)
+    unravelled = pddlenv.array.unravel_literal_indices(flat_idx, shapes)
+
+    # check that indices are unravelled to the same value and in the same order
+    for (arity, unravelled_idx), idx in zip(unravelled.items(), indices.values()):
+        np.testing.assert_array_equal(
+            unravelled_idx,
+            idx,
+            f"Unravelled indices not equal to original indices for arity {arity}",
+        )
+
+    # check that unravelled indices ravel to the same values
+    np.testing.assert_array_equal(pddlenv.array.ravel_literal_indices(unravelled, shapes), flat_idx)
