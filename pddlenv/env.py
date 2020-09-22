@@ -2,9 +2,8 @@ import collections
 import dataclasses
 from typing import AbstractSet, Collection, Generator, Optional, Set, Tuple
 
-import numpy as np
-
 import dm_env
+import numpy as np
 
 from .base import Action, Predicate, Problem
 from .heuristic import Heuristic
