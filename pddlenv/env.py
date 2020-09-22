@@ -2,6 +2,8 @@ import collections
 import dataclasses
 from typing import AbstractSet, Collection, Generator, Optional, Set, Tuple
 
+import numpy as np
+
 import dm_env
 
 from .base import Action, Predicate, Problem
@@ -27,7 +29,7 @@ class EnvState:
 @dataclasses.dataclass(frozen=True)
 class PDDLDynamics(object):
     __slots__ = ("discount", "use_cost_reward", "heuristic")
-    discount: float
+    discount: np.ndarray
     use_cost_reward: bool
     heuristic: Optional[Heuristic]
 
@@ -35,7 +37,7 @@ class PDDLDynamics(object):
                  discount: float = 1.,
                  use_cost_reward: bool = True,
                  heuristic: Optional[Heuristic] = None):
-        super().__setattr__("discount", discount)
+        super().__setattr__("discount", np.array(discount, np.float32))
         super().__setattr__("use_cost_reward", use_cost_reward)
         super().__setattr__("heuristic", heuristic)
 
@@ -49,7 +51,7 @@ class PDDLDynamics(object):
         next_literals = action.apply(literals)
         goal_reached = problem.goal_satisfied(next_literals)
 
-        reward = -1 if self.use_cost_reward else 0.
+        reward = -np.ones((), np.float32) if self.use_cost_reward else np.zeros((), np.float32)
         if goal_reached:
             reward += 1
 
