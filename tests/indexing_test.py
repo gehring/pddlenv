@@ -92,3 +92,18 @@ def test_ravel_unravel_idempotent(problem):
 
     # check that unravelled indices ravel to the same values
     np.testing.assert_array_equal(pddlenv.array.ravel_literal_indices(unravelled, shapes), flat_idx)
+
+
+def test_unravel_with_missing_arity():
+    indices = (np.array([0]), np.array([20]))
+    shapes = {1: (3, 2), 2: (3, 3, 2)}
+
+    correct_idx = (np.array([0]), np.array([2]), np.array([1]), np.array([0]))
+    unravelled_indices = pddlenv.array.unravel_literal_indices(indices, shapes)
+
+    arities = list(unravelled_indices.keys())
+    assert len(arities) == 1
+    assert arities[0] == 2
+
+    for i, (idx, true_idx) in enumerate(zip(unravelled_indices[arities[0]], correct_idx)):
+        np.testing.assert_array_equal(idx, true_idx, err_msg=f"Index for axis {i} is incorrect.")

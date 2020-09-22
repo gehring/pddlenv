@@ -85,18 +85,14 @@ def unravel_literal_indices(indices: Tuple[np.ndarray, np.ndarray],
                             shapes: LiteralShapes) -> LiteralIndices:
     arity_offsets = np.cumsum([np.prod(shape) for shape in shapes.values()])
     arity_indices = np.digitize(indices[1], arity_offsets)
-    print(shapes)
-    print(arity_indices)
-    print(np.array(shapes.keys()))
-    print(indices)
     arities = np.take(list(shapes.keys()), arity_indices)
 
     ravelled = collections.defaultdict(list)
     for arity, batch_idx, idx in zip(arities, *indices):
         ravelled[arity].append((batch_idx, idx))
 
-    print(ravelled)
     return {
-        arity: _unravel_index(idx, offset, shapes[arity])
-        for (arity, idx), offset in zip(ravelled.items(), np.pad(arity_offsets[:-1], (1, 0)))
+        arity: _unravel_index(ravelled[arity], offset, shapes[arity])
+        for arity, offset in zip(shapes, np.pad(arity_offsets[:-1], (1, 0)))
+        if arity in ravelled
     }
