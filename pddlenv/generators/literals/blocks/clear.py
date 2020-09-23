@@ -23,7 +23,7 @@ class ClearSampler(base.LiteralsSampler):
                 f"types: {BLOCK_TYPE_NAME}\n"
                 f"Found types: {set(types)}"
             )
-        if not (PREDICATE_REQ - preds.keys()):
+        if not (preds.keys() - PREDICATE_REQ):
             raise ValueError(
                 "Only blocks world problems are supported which must contain the following "
                 f"predicates: {PREDICATE_REQ}\n"
