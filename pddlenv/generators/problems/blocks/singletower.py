@@ -1,4 +1,5 @@
 import dataclasses
+import itertools
 import os
 from typing import Dict, Iterator, Optional
 
@@ -10,7 +11,7 @@ from pddlenv.generators import base
 
 
 @dataclasses.dataclass
-class SingleTowerGenerator(base.ProblemSampler):
+class SingleTowerSampler(base.ProblemSampler):
     min_blocks: int
     max_blocks: int
     round_robin: bool
@@ -57,4 +58,5 @@ class SingleTowerGenerator(base.ProblemSampler):
         yield from self._generate(rng)
 
     def enumerate_problems(self) -> Iterator[Problem]:
-        yield from self._generate(rng=None)
+        blocks_span = self.max_blocks - self.min_blocks + 1
+        yield from itertools.islice(self._generate(rng=None), blocks_span)

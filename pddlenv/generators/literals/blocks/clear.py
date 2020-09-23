@@ -9,7 +9,7 @@ BLOCK_TYPE_NAME = "block"
 PREDICATE_REQ = {"on", "clear", "handempty"}
 
 
-class ClearGenerator(base.LiteralsSampler):
+class ClearSampler(base.LiteralsSampler):
 
     def sample(self,
                problem: Problem,

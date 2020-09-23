@@ -1,1 +1,1 @@
-from pddlenv.generators.problems.blocks.singletower import SingleTowerGenerator
+from pddlenv.generators.problems.blocks.singletower import SingleTowerSampler

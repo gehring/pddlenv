@@ -1,1 +1,1 @@
-from pddlenv.generators.literals.blocks.clear import ClearGenerator
+from pddlenv.generators.literals.blocks.clear import ClearSampler
