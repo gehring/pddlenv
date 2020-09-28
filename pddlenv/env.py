@@ -36,7 +36,7 @@ class PDDLDynamics(object):
                  discount: float = 1.,
                  use_cost_reward: bool = True,
                  heuristic: Optional[Heuristic] = None):
-        super().__setattr__("discount", np.array(discount, np.float32))
+        super().__setattr__("discount", discount)
         super().__setattr__("use_cost_reward", use_cost_reward)
         super().__setattr__("heuristic", heuristic)
 
@@ -50,7 +50,7 @@ class PDDLDynamics(object):
         next_literals = action.apply(literals)
         goal_reached = problem.goal_satisfied(next_literals)
 
-        reward = -np.ones((), np.float32) if self.use_cost_reward else np.zeros((), np.float32)
+        reward = -1. if self.use_cost_reward else 0.
         if goal_reached:
             reward += 1
 
