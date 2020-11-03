@@ -142,12 +142,20 @@ class Action(str):
                 continue
 
 
+def _predicates_from_effect(effect: Tuple[Tuple[Type[Predicate], Tuple[int, ...]], ...]
+                            ) -> Tuple[Type[Predicate], ...]:
+    preds: Tuple[Type[Predicate], ...] = ()
+    if effect:
+        preds = tuple(zip(*effect))[0]  # type: ignore
+    return preds
+
+
 def find_static_predicates(actions: Collection[Type[Action]],
                            predicates: Collection[Type[Predicate]]) -> Collection[Type[Predicate]]:
     add_preds: Iterable[Type[Predicate]] = itertools.chain(
-        *(tuple(zip(*a.add_predicates))[0] for a in actions))  # type: ignore
+        *(_predicates_from_effect(a.add_predicates) for a in actions))
     del_preds: Iterable[Type[Predicate]] = itertools.chain(
-        *(tuple(zip(*a.del_predicates))[0] for a in actions))  # type: ignore
+        *(_predicates_from_effect(a.del_predicates) for a in actions))
     effect_preds = frozenset(itertools.chain(add_preds, del_preds))
     return frozenset(predicates) - effect_preds
 
