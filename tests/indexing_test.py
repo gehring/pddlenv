@@ -52,7 +52,7 @@ def test_compute_action_index(dummy_problem):
     ]
     indices, shapes = pddlenv.array.compute_indices(
         literals, dummy_problem.objects, dummy_problem.actions)
-    assert shapes == {2: (3, 3, 1), 3: (3, 3, 3, 1)}
+    assert shapes == {2: (3, 3, 2), 3: (3, 3, 3, 1)}
 
     # check that the `CleanHouse` predicate shared between both gives the same indices
     assert operator.eq(*indices[2][1])

@@ -78,12 +78,19 @@ def make_dummy_problem():
         [(Dirty, ("?h",))],
         [(ParentsHappy, ("?h",)), (Clean, ("?h",)), (Out, ("?c", "?h"))],
     )
+    RemoveCat = base.define_action(
+        "RemoveCat",
+        (("?c", (Cat,)), ("?hat", (Hat,))),
+        [(In, ("?c", "?hat"))],
+        [],
+        [(In, ("?c", "?hat"))],
+    )
 
     Domain = base.define_problem(
         "DummyDomain",
         types=[Cat, Hat, House],
         predicates=[In, Out, Clean, Dirty, ParentsHappy],
-        actions=[CleanHouse, LetIn],
+        actions=[CleanHouse, LetIn, RemoveCat],
         constants=[],
     )
 
