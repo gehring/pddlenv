@@ -121,7 +121,7 @@ class Action(str):
     @property
     def name(self) -> str:
         # to maintain compatibility with pyperplan's heuristics
-        return self.__class__.__name__
+        return self
 
     def applicable(self, literals: AbstractSet[Predicate]) -> bool:
         return self.preconditions <= literals
