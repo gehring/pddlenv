@@ -7,6 +7,15 @@ import types as pytypes
 from typing import (AbstractSet, ClassVar, Collection, Dict, FrozenSet, Iterable, Optional,
                     Protocol, Sequence, Set, Tuple, Type, TypeVar, Union)
 
+#
+# In this file, we define several classes that will become the superclasses
+# of classes that are generated from a pddl file.
+#
+# For example, each lifted action (move ?x ?y) in a pddl domain definition is
+# instantiated as its own class.
+# Grounding each lifted action (move city1 city2) is done by instantiating the class.
+#
+
 from pddl import pddl
 
 from pddlenv import parsing

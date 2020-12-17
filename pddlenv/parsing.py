@@ -5,6 +5,10 @@ from pddl import pddl
 
 import pddlenv.base as base
 
+#
+# We parse the domain/problem files using pyperplan parser,
+# then convert it into our own convenient representation/class
+# 
 
 def parse_pyperplan_predicate(pred: pddl.Predicate) -> Type["base.Predicate"]:
     types = [
