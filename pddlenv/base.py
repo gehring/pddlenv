@@ -249,7 +249,7 @@ class TypeObjectMap:
 
     def _add_to_subtypes(self, pddltype: Type[PDDLObject]):
         for parent_type in pddltype.__bases__:  # type: Type[PDDLObject]
-            if isinstance(parent_type, PDDLObject):
+            if issubclass(parent_type, PDDLObject):
                 self._subtypes[parent_type].add(pddltype)
                 self._add_to_subtypes(parent_type)
 
