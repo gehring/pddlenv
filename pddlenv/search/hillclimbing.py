@@ -49,9 +49,11 @@ class HillClimbing:
                             heap, base.Candidate(next_value, next_state))
 
                 if problem.goal_satisfied(literals):
+                    plan = utils.generate_plan(next_state, parents)
                     if self.logger is not None:
-                        self.logger.write({"expanded_states": expanded_states})
-                    return utils.generate_plan(next_state, parents)
+                        self.logger.write({"expanded_states": expanded_states,
+                                           "plan_length"    : len(plan)})
+                    return plan
 
         if self.logger is not None:
             self.logger.write({"expanded_states": expanded_states})
