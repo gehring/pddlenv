@@ -1,5 +1,4 @@
 import heapq
-import time
 from typing import AbstractSet, Callable, Dict, Optional, Sequence, Tuple
 
 from pddlenv import env
@@ -17,10 +16,8 @@ class GreedyBestFirst:
 
     def search(self,
                state: env.EnvState,
-               time_limit: float = None,
                expansion_limit: int = None) -> Optional[Sequence[Action]]:
         expanded_states = 0
-        start_time = time.perf_counter()
 
         # we assume that the dynamics will never change the problem instance
         problem = state.problem
@@ -29,8 +26,6 @@ class GreedyBestFirst:
         dynamics = env.PDDLDynamics()
 
         while heap:
-            if time_limit and time_limit <= time.perf_counter() - start_time:
-                break
             if expansion_limit and expansion_limit <= expanded_states:
                 break
 
@@ -49,11 +44,9 @@ class GreedyBestFirst:
 
                 if problem.goal_satisfied(literals):
                     if self.logger is not None:
-                        self.logger.write({"expanded_states": expanded_states,
-                                           "search_time": time.perf_counter() - start_time})
+                        self.logger.write({"expanded_states": expanded_states})
                     return utils.generate_plan(next_state, parents)
 
         if self.logger is not None:
-            self.logger.write({"expanded_states": expanded_states,
-                               "search_time": time.perf_counter() - start_time})
+            self.logger.write({"expanded_states": expanded_states})
         return None
