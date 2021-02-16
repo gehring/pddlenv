@@ -94,7 +94,7 @@ class Action(str):
                 f"{len(objects)} were given."
             )
         return super().__new__(
-            cls, f"{cls.__name__}({' '.join(objects)})")
+            cls, f"({cls.__name__} {' '.join(objects)})")
 
     def __init__(self, *objects, problem: "Problem" = None):
         super().__init__()
