@@ -32,7 +32,7 @@ def make_heuristic_function(name: str, problem: Problem, cache_maxsize: Optional
 
     @functools.lru_cache(maxsize=cache_maxsize)
     def _heuristic(literals: FrozenSet[Predicate]) -> float:
-        node = Node(literals - problem.static_literals)
+        node = Node(literals & task.facts)
         return heuristic(node)
 
     return _heuristic
@@ -41,9 +41,13 @@ def make_heuristic_function(name: str, problem: Problem, cache_maxsize: Optional
 @dataclasses.dataclass(frozen=True)
 class Heuristic:
     name: str
+    discount: float = dataclasses.field(default=1.)
 
     def __call__(self, literals: AbstractSet[Predicate], problem: Problem) -> float:
-        return self._heuristic_function(problem)(literals)
+        h_val = self._heuristic_function(problem)(literals)
+        if self.discount < 1:
+            h_val = (1 - self.discount**h_val)/(1 - self.discount)
+        return h_val
 
     @functools.lru_cache
     def _heuristic_function(self, problem, cache_maxsize=None):

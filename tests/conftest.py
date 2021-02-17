@@ -60,6 +60,9 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture
 def pddl_test_case(domain_path, problem_path, length):
+    # Clear the cache since two domains might have predicates with the same name.
+    base._predicate_cache = {}
+
     init_literals, problem = pddlenv.parse_pddl_problem(domain_path, problem_path)
     return PDDLTestCase(domain_path, problem_path, init_literals, problem, length)
 

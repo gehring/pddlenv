@@ -24,6 +24,9 @@ class EnvState:
     def goal_state(self) -> bool:
         return self.problem.goal_satisfied(self.literals)
 
+    def deadend(self) -> bool:
+       return not any((a.applicable(self.literals) for a in self.problem.grounded_actions))
+
 
 @dataclasses.dataclass(frozen=True)
 class PDDLDynamics(object):
@@ -43,13 +46,18 @@ class PDDLDynamics(object):
     def __call__(self, state: EnvState, action: Action) -> dm_env.TimeStep:
         literals = state.literals
         problem = state.problem
-        if not action.applicable(literals):
-            raise InvalidAction(
-                f"Preconditions not satisfied.\n\nAction: {action}\n\nState literals: {literals}")
 
-        next_literals = action.apply(literals)
+        if action is None:
+            # no-op
+            next_literals = literals
+        else:
+            if not action.applicable(literals):
+                raise InvalidAction(
+                    f"Preconditions not satisfied.\n\nAction: {action}\n\nState literals: {literals}")
+
+            next_literals = action.apply(literals)
+
         goal_reached = problem.goal_satisfied(next_literals)
-
         reward = -1. if self.use_cost_reward else 0.
         if goal_reached:
             reward += 1
@@ -63,6 +71,9 @@ class PDDLDynamics(object):
         next_state = dataclasses.replace(state, literals=next_literals)
         if goal_reached:
             timestep = dm_env.termination(reward, next_state)
+        elif next_state.deadend():
+            # truncate episode if next state is a dead end
+            timestep = dm_env.truncation(reward, next_state, self.discount)
         else:
             timestep = dm_env.transition(reward, next_state, self.discount)
         return timestep
@@ -70,6 +81,9 @@ class PDDLDynamics(object):
     def sample_transitions(self, state: EnvState
                            ) -> Tuple[Tuple[Action, ...], Tuple[dm_env.TimeStep, ...]]:
         actions = state.problem.valid_actions(state.literals)
+        if len(actions) == 0:
+            actions = (None,)
+
         return actions, tuple(self(state, a) for a in actions)
 
 
