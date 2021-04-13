@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import dataclasses
 import functools
 import itertools
@@ -31,10 +30,12 @@ def make_heuristic_function(name: str, problem: Problem, cache_maxsize: Optional
     )
     heuristic = pyperplan.HEURISTICS[name](task)
 
-    @functools.lru_cache(maxsize=cache_maxsize)
     def _heuristic(literals: FrozenSet[Predicate]) -> float:
         node = Node(literals & task.facts)
         return heuristic(node)
+
+    if cache_maxsize != 0:
+        _heuristic = functools.lru_cache(maxsize=cache_maxsize)(_heuristic)
 
     return _heuristic
 
@@ -48,14 +49,17 @@ class Heuristic:
     _heuristic_function: Callable = dataclasses.field(init=False)
 
     def __post_init__(self):
-        # wrap make_heuristic_function with a lru cache and with the name and size arguments set
+        # wrap make_heuristic_function with the name and size arguments set
         make_heuristic = functools.partial(
             make_heuristic_function,
             self.name,
             cache_maxsize=self.cache_size_per_problem,
         )
-        cached_make_heuristic = functools.lru_cache(self.num_cached_problems)(make_heuristic)
-        object.__setattr__(self, "_heuristic_function", cached_make_heuristic)
+        # wrap make_heuristic_function with a lru cache if size is None or non-zero
+        if self.num_cached_problems != 0:
+            make_heuristic = functools.lru_cache(self.num_cached_problems)(make_heuristic)
+
+        object.__setattr__(self, "_heuristic_function", make_heuristic)
 
     def __call__(self, literals: AbstractSet[Predicate], problem: Problem) -> float:
         h_val = self._heuristic_function(problem)(literals)
