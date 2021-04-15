@@ -17,8 +17,10 @@ class HillClimbing:
 
     def search(self,
                state: env.EnvState,
-               expansion_limit: int = None) -> Optional[Sequence[Action]]:
+               evaluation_limit: Optional[int] = None,
+               expansion_limit: Optional[int] = None) -> Optional[Sequence[Action]]:
         expanded_states = 0
+        evaluated_states = 0
 
         # we assume that the dynamics will never change the problem instance
         problem = state.problem
@@ -39,6 +41,9 @@ class HillClimbing:
             next_states = [timestep.observation for timestep in timesteps]
 
             for action, next_state in zip(actions, next_states):
+                if evaluation_limit and evaluation_limit <= evaluated_states:
+                    break
+                evaluated_states += 1
                 literals = next_state.literals
 
                 if next_state not in parents:
@@ -52,9 +57,12 @@ class HillClimbing:
                     plan = utils.generate_plan(next_state, parents)
                     if self.logger is not None:
                         self.logger.write({"expanded_states": expanded_states,
+                                           "evaluated_states": evaluated_states,
                                            "plan_length"    : len(plan)})
                     return plan
 
         if self.logger is not None:
-            self.logger.write({"expanded_states": expanded_states})
+            self.logger.write({
+                "expanded_states": expanded_states,
+                "evaluated_states": evaluated_states,})
         return None
