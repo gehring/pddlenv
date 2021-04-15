@@ -8,11 +8,12 @@ from pddlenv.search import base, utils
 Heuristic = Callable[[AbstractSet[Predicate], Problem], float]
 
 
-class GreedyBestFirst:
+class HillClimbing:
 
-    def __init__(self, heuristic: Heuristic, logger: Optional[base.Logger] = None):
+    def __init__(self, heuristic: Heuristic, logger: Optional[base.Logger] = None, detect_minima: bool = False):
         self.heuristic = heuristic
         self.logger = logger
+        self.detect_minima = detect_minima
 
     def search(self,
                state: env.EnvState,
@@ -32,7 +33,10 @@ class GreedyBestFirst:
                 break
 
             expanded_states += 1
-            state = heapq.heappop(heap).state
+            node  = heapq.heappop(heap)
+            state = node.state
+            value = node.heuristic
+            heap = []           # hill climbing --- forget everything
             actions, timesteps = dynamics.sample_transitions(state)
             next_states = [timestep.observation for timestep in timesteps]
 
@@ -44,8 +48,10 @@ class GreedyBestFirst:
 
                 if next_state not in parents:
                     parents[next_state] = (state, action)
-                    heapq.heappush(
-                        heap, base.Candidate(self.heuristic(literals, problem), next_state))
+                    next_value = self.heuristic(literals, problem)
+                    if (not self.detect_minima) or (next_value <= value):
+                        heapq.heappush(
+                            heap, base.Candidate(next_value, next_state))
 
                 if problem.goal_satisfied(literals):
                     plan = utils.generate_plan(next_state, parents)
